@@ -109,8 +109,8 @@ void freeCache()
 void accessData(mem_addr_t addr)
 {
     int i;
-    unsigned long long int eviction_lru = ULONG_MAX;
-    unsigned int eviction_line = 0;
+   // unsigned long long int eviction_lru = ULONG_MAX;
+   // unsigned int eviction_line = 0;
     mem_addr_t set_index = (addr >> b) & set_index_mask;
     mem_addr_t tag = addr >> (s+b);
     
@@ -131,7 +131,7 @@ void accessData(mem_addr_t addr)
     //is miss
     if(hit_flags==0){
     	miss_count++;
-    	int max_index = 0; max_lru = cache_set[0].lru;
+    	int max_index = 0; int max_lru = cache_set[0].lru;
     	//input date to the line which is empty
     	for(i = 0; i < E; i++){
     		if(cache_set[i].valid == 0){
@@ -142,8 +142,8 @@ void accessData(mem_addr_t addr)
     		}
     		
     		//fine the max lru to replace
-    		if(max_num < cache_set[i].lru){
-    		max_num = cache_set[i].lru;
+    		if(max_lru < cache_set[i].lru){
+    		max_lru = cache_set[i].lru;
     		max_index = i;
     		}
     	}
