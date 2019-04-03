@@ -113,10 +113,48 @@ void accessData(mem_addr_t addr)
     unsigned int eviction_line = 0;
     mem_addr_t set_index = (addr >> b) & set_index_mask;
     mem_addr_t tag = addr >> (s+b);
+    
+    int hit_flags = 0;
 
     cache_set_t cache_set = cache[set_index];
-
-
+    
+    //find in index
+    for(i = 0; i < E; i++){
+    	cache_set[i].lru++;
+    	if(hit_flags) continue;
+    	if(cache_set[i].tag == tag && cache_set[i].valid == 1){
+    		cache_set[i].lru = 0;
+    		hit_count++;
+    		hit_flags = 1;
+    	}
+    }
+    //is miss
+    if(hit_flags==0){
+    	miss_count++;
+    	int max_index = 0; max_lru = cache_set[0].lru;
+    	//input date to the line which is empty
+    	for(i = 0; i < E; i++){
+    		if(cache_set[i].valid == 0){
+    			cache_set[i].tag = tag;
+                cache_set[i].lru = 0;
+                cache_set[i].valid = 1;
+                break;
+    		}
+    		
+    		//fine the max lru to replace
+    		if(max_num < cache_set[i].lru){
+    		max_num = cache_set[i].lru;
+    		max_index = i;
+    		}
+    	}
+    	
+    	//no empty cache line, replace the max one
+    	if(i >= E){
+    		cache_set[max_index].tag = tag;
+            cache_set[max_index].lru = 0;
+    		eviction_count++;
+    	}
+    }
 }
 
 
@@ -128,6 +166,7 @@ void replayTrace(char* trace_fn)
     char buf[1000];
     mem_addr_t addr=0;
     unsigned int len=0;
+    char op;
     FILE* trace_fp = fopen(trace_fn, "r");
     while(1){
     	int tmp;
