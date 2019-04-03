@@ -129,7 +129,26 @@ void replayTrace(char* trace_fn)
     mem_addr_t addr=0;
     unsigned int len=0;
     FILE* trace_fp = fopen(trace_fn, "r");
-
+    while(1){
+    	int tmp;
+    	char *retp = fgets(buf,sizeof(char)*999,trace_fp);
+    	if(retp == NULL){
+    		printf("file open error!");
+    		break;
+    	}
+    	sscanf(buf,"%c%c%x%d",&op,&op,&tmp,&len);
+    	addr = tmp;
+    	if(op=='L'){
+    		accessData(addr);
+    	}
+    	else if(op=='S'){
+    		accessData(addr);
+    	}
+    	else if(op=='M'){
+    		accessData(addr);
+    		accessData(addr);
+    	}
+    }
 
     fclose(trace_fp);
 }
