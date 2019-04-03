@@ -73,9 +73,11 @@ void initCache()
 {
     int i,j;
     cache = (cache_set_t*) malloc(sizeof(cache_set_t) * S);
-    for (i=0; i<S; i++){
+    for (i=0; i<S; i++)
+    {
         cache[i]=(cache_line_t*) malloc(sizeof(cache_line_t) * E);
-        for (j=0; j<E; j++){
+        for (j=0; j<E; j++)
+        {
             cache[i][j].valid = 0;
             cache[i][j].tag = 0;
             cache[i][j].lru = 0;
@@ -86,19 +88,18 @@ void initCache()
     set_index_mask = (mem_addr_t) (pow(2, s) - 1);
 }
 
-
 /* 
  * freeCache - free allocated memory
  */
 void freeCache()
 {
     int i;
-	for(i = 0; i < S; i++){
-		free(cache[i]);	
-	}
-	free(cache);
+    for (i=0; i<S; i++)
+    {
+    	free(cache[i]);
+    }
+    free(cache);
 }
-
 
 /* 
  * accessData - Access data at memory address addr.
@@ -109,54 +110,56 @@ void freeCache()
 void accessData(mem_addr_t addr)
 {
     int i;
-   // unsigned long long int eviction_lru = ULONG_MAX;
-   // unsigned int eviction_line = 0;
     mem_addr_t set_index = (addr >> b) & set_index_mask;
     mem_addr_t tag = addr >> (s+b);
-    
-    int hit_flags = 0;
-
     cache_set_t cache_set = cache[set_index];
-    
-    //find in index
-    for(i = 0; i < E; i++){
-    	cache_set[i].lru++;
-    	if(hit_flags) continue;
-    	if(cache_set[i].tag == tag && cache_set[i].valid == 1){
-    		cache_set[i].lru = 0;
+    printf("tag =%llu set_index =%llu\n",tag,set_index);
+    int flag1 = 0;
+
+    for(i=0; i<E;++i)
+    {
+        cache_set[i].lru++;
+        if(flag1) continue;
+    	if(cache_set[i].tag == tag && cache_set[i].valid == 1)
+    	{
+            cache_set[i].lru = 0;
     		hit_count++;
-    		hit_flags = 1;
+    		printf("hit =%d\n",i);
+    		flag1 = 1;
     	}
     }
-    //is miss
-    if(hit_flags==0){
-    	miss_count++;
-    	int max_index = 0; int max_lru = cache_set[0].lru;
-    	//input date to the line which is empty
-    	for(i = 0; i < E; i++){
-    		if(cache_set[i].valid == 0){
-    			cache_set[i].tag = tag;
+    if(flag1==0)
+    {
+        miss_count++;
+    	int max_index=0,max_num = cache_set[0].lru;
+    	for(i=0;i<E;++i)
+    	{
+    		if(cache_set[i].valid == 0)
+    		{
+                cache_set[i].tag = tag;
                 cache_set[i].lru = 0;
                 cache_set[i].valid = 1;
-                break;
+    			printf("mis =%d\n",i);
+    			break;
     		}
-    		
-    		//fine the max lru to replace
-    		if(max_lru < cache_set[i].lru){
-    		max_lru = cache_set[i].lru;
-    		max_index = i;
+    		if(max_num < cache_set[i].lru)
+    		{
+    			max_num = cache_set[i].lru;
+    			max_index = i;
     		}
     	}
-    	
-    	//no empty cache line, replace the max one
-    	if(i >= E){
-    		cache_set[max_index].tag = tag;
+    	if(i>=E)
+    	{
+            cache_set[max_index].tag = tag;
             cache_set[max_index].lru = 0;
     		eviction_count++;
+    		printf("evi =%d\n",max_index);
+    		for(i=0;i<E;++i)
+    			printf("lru =%llu ",cache_set[i].lru);
+    		printf("\n");
     	}
     }
 }
-
 
 /*
  * replayTrace - replays the given trace file against the cache 
@@ -168,27 +171,33 @@ void replayTrace(char* trace_fn)
     unsigned int len=0;
     char op;
     FILE* trace_fp = fopen(trace_fn, "r");
-    while(1){
+    while(1)
+    {
     	int tmp;
-    	char *retp = fgets(buf,sizeof(char)*999,trace_fp);
-    	if(retp == NULL){
-    		printf("file open error!");
+    	//ret = fread(buf,sizeof(char),999,trace_fp);
+    	char* retp = fgets(buf,sizeof(char)*999,trace_fp);
+    	if(retp==NULL)
+    	{
+    		printf("end of file\n");
     		break;
     	}
     	sscanf(buf,"%c%c%x%d",&op,&op,&tmp,&len);
     	addr = tmp;
-    	if(op=='L'){
+    	//printf("\nop=%c addr=%llu\n",op,addr);
+    	if(op=='L')
+    	{
     		accessData(addr);
     	}
-    	else if(op=='S'){
+    	else if(op=='S')
+    	{
     		accessData(addr);
     	}
-    	else if(op=='M'){
+    	else if(op=='M')
+    	{
     		accessData(addr);
     		accessData(addr);
     	}
     }
-
     fclose(trace_fp);
 }
 
@@ -217,9 +226,10 @@ void printUsage(char* argv[])
 int main(int argc, char* argv[])
 {
     char c;
-
-    while( (c=getopt(argc,argv,"s:E:b:t:vh")) != -1){
-        switch(c){
+    while( (c=getopt(argc,argv,"s:E:b:t:vh")) != -1)
+    {
+        switch(c)
+        {
         case 's':
             s = atoi(optarg);
             break;
@@ -245,7 +255,8 @@ int main(int argc, char* argv[])
     }
 
     /* Make sure that all required command line args were specified */
-    if (s == 0 || E == 0 || b == 0 || trace_file == NULL) {
+    if (s == 0 || E == 0 || b == 0 || trace_file == NULL) 
+    {
         printf("%s: Missing required command line argument\n", argv[0]);
         printUsage(argv);
         exit(1);
