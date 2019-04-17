@@ -113,50 +113,48 @@ void accessData(mem_addr_t addr)
     mem_addr_t set_index = (addr >> b) & set_index_mask;
     mem_addr_t tag = addr >> (s+b);
     cache_set_t cache_set = cache[set_index];
-    printf("tag =%llu set_index =%llu\n",tag,set_index);
-    int flag1 = 0;
-
+    
+    int flag = 0;  //命中标记，1：命中   0：未命中
+    //循环判断是否命中
     for(i=0; i<E;++i)
     {
-        cache_set[i].lru++;
-        if(flag1) continue;
+        cache_set[i].lru++;  //lru计数器
+        //tag相等且valid为1，命中
     	if(cache_set[i].tag == tag && cache_set[i].valid == 1)
     	{
             cache_set[i].lru = 0;
     		hit_count++;
-    		printf("hit =%d\n",i);
-    		flag1 = 1;
+    		flag = 1;
     	}
     }
-    if(flag1==0)
+    //miss
+    if(flag==0)
     {
         miss_count++;
-    	int max_index=0,max_num = cache_set[0].lru;
+    	int max_index=0,max_num = cache_set[0].lru;  //lru需要替换的cache行下标
     	for(i=0;i<E;++i)
     	{
+    		//存在未使用的行，直接填入
     		if(cache_set[i].valid == 0)
     		{
                 cache_set[i].tag = tag;
                 cache_set[i].lru = 0;
                 cache_set[i].valid = 1;
-    			printf("mis =%d\n",i);
     			break;
     		}
+    		//比较lru计数器大小，更新替换下标
     		if(max_num < cache_set[i].lru)
     		{
     			max_num = cache_set[i].lru;
     			max_index = i;
     		}
     	}
+    	//遍历结束，更新cache行
     	if(i>=E)
     	{
             cache_set[max_index].tag = tag;
             cache_set[max_index].lru = 0;
     		eviction_count++;
-    		printf("evi =%d\n",max_index);
-    		for(i=0;i<E;++i)
-    			printf("lru =%llu ",cache_set[i].lru);
-    		printf("\n");
     	}
     }
 }
@@ -166,7 +164,7 @@ void accessData(mem_addr_t addr)
  */
 void replayTrace(char* trace_fn)
 {
-    char buf[1000];
+    char buf[1024];
     mem_addr_t addr=0;
     unsigned int len=0;
     char op;
@@ -174,16 +172,16 @@ void replayTrace(char* trace_fn)
     while(1)
     {
     	int tmp;
-    	//ret = fread(buf,sizeof(char),999,trace_fp);
-    	char* retp = fgets(buf,sizeof(char)*999,trace_fp);
+    	char* retp = fgets(buf,sizeof(char)*1024,trace_fp);
     	if(retp==NULL)
     	{
-    		printf("end of file\n");
+    		printf("open file error!\n");
     		break;
     	}
+    	//读取操作指令
     	sscanf(buf,"%c%c%x%d",&op,&op,&tmp,&len);
+    	//获取访存地址
     	addr = tmp;
-    	//printf("\nop=%c addr=%llu\n",op,addr);
     	if(op=='L')
     	{
     		accessData(addr);
@@ -192,6 +190,7 @@ void replayTrace(char* trace_fn)
     	{
     		accessData(addr);
     	}
+    	//两次访问cache
     	else if(op=='M')
     	{
     		accessData(addr);
